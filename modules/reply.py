@@ -1,9 +1,88 @@
 from linebot.models import (
     MessageEvent, TextMessage, StickerMessage, TextSendMessage, ImageSendMessage, StickerSendMessage, LocationSendMessage, TemplateSendMessage, ButtonsTemplate, PostbackAction, MessageAction, URIAction, CarouselTemplate, CarouselColumn, QuickReply, QuickReplyButton, FlexSendMessage
 )
-# LINE所支援的回覆格式可參考官方文件內的 Message Object章節
+from selenium import webdriver
+from selenium.webdriver.common.action_chains import ActionChains
+from urllib.parse import quote
+import time
 # https://github.com/line/line-bot-sdk-python
 
+def lowerlize(string):
+    return chr(ord(string[0])+32)+string[1:]
+
+class ReplyActions:
+    def __init__(self):
+        self.user_msg_par = None
+        self.actions = ["Search","Wiki",
+                        "Channel","Latest",
+                        "Location","Route"]
+    def get_user_msg_par_action(self, msg, action):
+        self.user_msg_par = msg
+        func_name = lowerlize(action)+"_string"
+        action_func = getattr(self,func_name)
+        return action_func()
+    def search_string(self):
+        return TextSendMessage(
+            text=f"https://www.google.com/search?q={self.user_msg_par.replace(' ','+')}"
+        )
+    def wiki_string(self):
+        return TextSendMessage(
+            text=f"https://en.wikipedia.org/wiki/{self.user_msg_par.replace(' ','_')}"
+        )
+    def channel_string(self):
+        return TextSendMessage(
+            text=self.get_channel(self.user_msg_par)
+        )
+    def latest_string(self):
+        return TextSendMessage(
+            text=self.get_latest(self.user_msg_par)
+        )
+    def location_string(self):
+        return TextSendMessage(
+            text=f"https://www.google.com.tw/maps/search/{self.user_msg_par}"
+        )
+    def route_string(self):
+        start,end = self.user_msg_par.split("-")
+        return TextSendMessage(
+            text=f"https://www.google.com.tw/maps/dir/{quote(start)}/{quote(end)}"
+        )
+
+    def get_channel(self,keyword):
+        options = webdriver.ChromeOptions()
+        options.add_argument("--headless")
+        driver = webdriver.Chrome(options=options)
+
+        url = f"https://www.youtube.com/results?search_query={quote(keyword)}"
+        driver.get(url)
+        driver.implicitly_wait(30)
+        target = driver.find_elements_by_class_name("ytd-channel-renderer")
+        for elem in target:
+            if elem.get_attribute("href"):
+                channel_link = elem.get_attribute("href")
+                break
+        driver.close()
+        return channel_link
+    def get_latest(self,keyword):
+
+        options = webdriver.ChromeOptions()
+        options.add_argument("--headless")
+        driver = webdriver.Chrome(options=options)
+
+        url = f"https://www.youtube.com/results?search_query={quote(keyword)}"
+        driver.get(url)
+        driver.implicitly_wait(30)
+        target = driver.find_elements_by_class_name("ytd-channel-renderer")
+        channel_link = None
+        for elem in target:
+            if elem.get_attribute("href"):
+                channel_link = elem.get_attribute("href")
+                break
+
+        channel_videos = channel_link + "/videos"
+        driver.get(channel_videos)
+        links = driver.find_elements_by_id("video-title")
+
+        return links[0].get_attribute("href")
 
 faq = {
     '捷運':TextSendMessage(
@@ -30,73 +109,31 @@ faq = {
                           ),
 }
 
-# 主選單
-menu = TemplateSendMessage(
-    alt_text='Carousel template',
+youtube_menu = TemplateSendMessage(
+    alt_text='Introduction',
     template=CarouselTemplate(
         columns=[
             # 卡片一
             CarouselColumn(
                 # 卡片一圖片網址
-                thumbnail_image_url='https://picsum.photos/id/1/900/400',
-                title='卡片一標題',
-                text='內文一',
+                thumbnail_image_url='https://frankchiu.io/wp-content/uploads/2020/01/youtube_logo_dark.jpg',
+                title='Introduction',
+                text= "Find out what this chatbot can do for you!",
                 actions=[
                     MessageAction(
-                        label='台積電(2330)',
-                        text='2330'
+                        label='Basic Functions',
+                        text='Basic Functions'
                     ),
                     MessageAction(
-                        label='中華電(2412)',
-                        text='2412'
+                        label='Youtube Helper',
+                        text='Youtube Helper'
                     ),
                     MessageAction(
-                        label='鴻海(2317)',
-                        text='2317'
-                    )
+                        label='Route Helper',
+                        text='Route Helper'
+                    ),
                 ]
             ),
-            # 卡片二
-            CarouselColumn(
-                # 卡片二圖片網址
-                thumbnail_image_url='https://picsum.photos/id/2/900/400',
-                title='卡片二標題',
-                text='內文二',
-                actions=[
-                    MessageAction(
-                        label='兆豐金(2886)',
-                        text='2886'
-                    ),
-                    MessageAction(
-                        label='玉山金(2884)',
-                        text='2884'
-                    ),
-                    MessageAction(
-                        label='中信金(2891)',
-                        text='2891'
-                    )
-                ]
-            ),
-            CarouselColumn(
-                # 卡片二圖片網址
-                thumbnail_image_url='https://picsum.photos/id/2/900/400',
-                title='Functions',
-                text='What do you wanna do?',
-                actions=[
-                    MessageAction(
-                        label='Transportation',
-                        text='交通'
-                    ),
-                    MessageAction(
-                        label='Photo',
-                        text='照片'
-                    ),
-                    MessageAction(
-                        label='Sticker',
-                        text='貼圖'
-                    )
-                ]
-            )
         ]
     )
 )
@@ -319,3 +356,43 @@ def get_stock_flex(stock):
             }
     )
     return fsm
+
+
+def get_route(start, end):
+    options = webdriver.ChromeOptions()
+    options.add_argument('--kiosk')
+    driver = webdriver.Chrome(options=options)
+    driver.get("chrome://settings/")
+    driver.execute_script("chrome.settingsPrivate.setDefaultZoom(0.8);")
+    driver.implicitly_wait(30)
+    url = f"https://www.google.com.tw/maps/dir/{quote(start)}/{quote(end)}"
+    print(url)
+    driver.get(url)
+    driver.implicitly_wait(30)
+    buttons = driver.find_element_by_css_selector("[role~='radiogroup']").find_elements_by_tag_name("button")
+    for button in buttons:
+        method = button.find_element_by_tag_name("img").get_attribute("aria-label")
+        print(method)
+        # try:
+        #     ActionChains(driver).click(button).perform()
+        #     time.sleep(2)
+        #     methods = driver.find_elements_by_class_name("section-directions-trip")
+        #     for method in methods:
+        #         distance = method.find_element_by_css_selector("[class~='section-directions-trip-distance']").text
+        #         duration = method.find_element_by_css_selector("[class~='section-directions-trip-duration']:first-child").text
+        #         # condition = method.find_element_by_css_selector("[class~='section-directions-trip-duration']").\
+        #         #     get_attribute("class").split("-")[-1] if button==0 else None
+        #         info = [distance, condition, duration]
+        #         for attr in info:
+        #             if attr:
+        #                 print(attr, end=" ")
+        #         print()
+        # except Exception as e:
+        #     continue
+    driver.close()
+    return TextSendMessage(
+            text="brr"
+        )
+
+
+# get_route("松山圖書館", "台北101")
