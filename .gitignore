@@ -2,6 +2,7 @@
 ngrok
 ngrok.exe
 chromedriver.exe
+modules/chromedriver.exe
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
