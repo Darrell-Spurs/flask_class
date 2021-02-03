@@ -13,7 +13,7 @@ from linebot.models import (
 # Doc link https://github.com/line/line-bot-sdk-python
 
 from modules.stock import get_stock_info
-from modules.reply import youtube_menu, get_stock_flex, ReplyActions, get_route
+from modules.reply import youtube_menu, get_stock_flex, ReplyActions
 from modules.test import sel_test
 import time
 
