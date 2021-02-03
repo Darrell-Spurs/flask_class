@@ -30,7 +30,7 @@ handler = WebhookHandler(CHANNEL_SECRET)
 # just test
 @app.route("/seltest")
 def testtest():
-    return sel_test
+    return sel_test()
 
 # post to handlers
 @app.route("/", methods=['POST'])
