@@ -48,39 +48,63 @@ def get_newest(keyword):
     return links[0].get_attribute("href")
 
 
-def get_route(start, end):
+def get_route(start, end, user_par):
+
+    no_distance = ["Transit","Flight",'大眾運輸','飛機']
+
     options = webdriver.ChromeOptions()
-    options.add_argument('--kiosk')
+    options.add_argument('--headless')
     driver = webdriver.Chrome(options=options)
-    driver.get("chrome://settings/")
-    driver.execute_script("chrome.settingsPrivate.setDefaultZoom(0.8);")
-    driver.implicitly_wait(30)
     url = f"https://www.google.com.tw/maps/dir/{quote(start)}/{quote(end)}"
     print(url)
     driver.get(url)
     driver.implicitly_wait(30)
-    buttons = driver.find_elements_by_css_selector("[role~='radiogroup']")
+    buttons = driver.find_element_by_css_selector("[role~='radiogroup']").find_elements_by_tag_name("button")
     for button in buttons:
-        method = button.find_element_by_tag_name("img").get_attribute("aria-label")
-        print(method)
+        if button.get_attribute("disabled") == "true":
+            continue
+        travel_type = button.find_element_by_tag_name("img").get_attribute("aria-label")
         try:
             ActionChains(driver).click(button).perform()
             time.sleep(2)
-            methods = driver.find_elements_by_class_name("section-directions-trip")
-            for method in methods:
-                distance = method.find_element_by_css_selector("[class~='section-directions-trip-distance']").text
-                duration = method.find_element_by_css_selector("[class~='section-directions-trip-duration']:first-child").text
-                condition = method.find_element_by_css_selector("[class~='section-directions-trip-duration']").\
-                    get_attribute("class").split("-")[-1] if button==0 else None
-                info = [distance, condition, duration]
-                for attr in info:
-                    if attr:
-                        print(attr, end=" ")
-                print()
+            travel_list = driver.find_elements_by_css_selector("[class='section-layout']>[class~='section-directions-trip']")
+            for method in travel_list:
+                if travel_type == user_par:
+                    # scroll to the element
+                    driver.execute_script("return arguments[0].scrollIntoView(true);",
+                                          method)
+                    # travel method
+                    way = method.find_element_by_tag_name("img").get_attribute("aria-label").replace(" ",'')
+                    # travel path hint
+                    description = method.find_element_by_tag_name("h1").text
+                    # if transit, find the transportation to take
+                    if way=="Transit" or way=="大眾運輸":
+                        steps = method.find_elements_by_css_selector("[class~='section-directions-trip-renderable-summary']>span")
+                        time.sleep(3)
+                        for step in steps:
+                            transit_tool = step.text
+                            print(transit_tool[:len(transit_tool/2)-1])
+                            alt_type = step.find_element_by_tag_name("img").get_attribute("alt")
+                            # print(step_type,"////", alt_type=="")
+                            print(alt_type if alt_type!="" else "->", transit_tool, end=" ")
+                            # print(trans_type[step_type],end=" ")
+                    # travel distance
+                    distance = method.find_element_by_css_selector("[class~='section-directions-trip-distance']").text \
+                        if way not in no_distance else None
+
+                    duration = method.find_element_by_css_selector("[class~='section-directions-trip-duration']:first-child").text
+
+                    condition = method.find_element_by_css_selector("[class~='section-directions-trip-duration']").\
+                        get_attribute("class").split("-")[-1] if button==0 else None
+
+                    info = [way, description, distance, duration, condition]
+                    for attr in info:
+                        if attr:
+                            print(attr, end="/")
+                    print()
         except Exception as e:
-            raise e
-            # continue
+            continue
     driver.close()
 
 
-get_route("松山圖書館", "台北101")
+get_route("SOGO復興館", "松山圖書館", "Transit")

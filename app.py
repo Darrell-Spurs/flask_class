@@ -13,7 +13,8 @@ from linebot.models import (
 # Doc link https://github.com/line/line-bot-sdk-python
 
 from modules.stock import get_stock_info
-from modules.reply import faq, youtube_menu, get_stock_flex, ReplyActions, get_route
+from modules.reply import youtube_menu, get_stock_flex, ReplyActions, get_route
+from modules.test import sel_test
 import time
 
 app = Flask(__name__)
@@ -26,7 +27,12 @@ CHANNEL_SECRET = '1f6a5a42b19004c7bc1aeb76cc9097c5'
 line_bot_api = LineBotApi(CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(CHANNEL_SECRET)
 
+# just test
+@app.route("/seltest")
+def testtest():
+    return sel_test
 
+# post to handlers
 @app.route("/", methods=['POST'])
 def callback():
     # Get X-Line-Signature from header when Line bot received a message
