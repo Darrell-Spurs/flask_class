@@ -11,4 +11,4 @@ def sel_test():
     driver = webdriver.Chrome(executable_path=os.environ.get("CHROME_DRIVER_PATH"),
                               options=options)
     driver.get("https://www.google.com")
-    print(driver.page_source)
+    return driver.page_source
