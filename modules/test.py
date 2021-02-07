@@ -1,14 +1,12 @@
-import os
-from selenium import webdriver
+ind=0
+a=[1,2,3,5,4,5,6,7,5,1,4]
 
-
-def sel_test():
-    options = webdriver.ChromeOptions()
-    options.binary_location = os.environ.get("GOOGLE_CHROME_BIN")
-    options.add_argument('--headless')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--no-sandbox')
-    driver = webdriver.Chrome(executable_path=os.environ.get("CHROME_DRIVER_PATH"),
-                              options=options)
-    driver.get("https://www.google.com")
-    return driver.page_source
+for i in range(a.count(5)+1):
+    temp=""
+    while ind!=len(a) and a[ind]!=5:
+        temp+=(str(a[ind])+" ")
+        ind+=1
+    else:
+        ind+=1
+        print(temp)
+        continue
