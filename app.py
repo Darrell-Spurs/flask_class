@@ -94,14 +94,19 @@ def handle_message(event):
             reply = reply_actions.get_user_msg_par_action(user_msg,db_status)
         except:
             pass
+
     # check if the prefix is in actions
-    elif user_msg.capitalize() in reply_actions.actions:
+    elif user_msg.capitalize() in reply_actions.actions.keys():
         action = user_msg.capitalize()
         status["status"] = action
+        reply = TextSendMessage(text=reply_actions.actions[action])
+
     # send back intro menu
     elif user_msg.capitalize().replace(" ","") == "Intro":
         reply = reply_actions.intro_flex()
-    elif user_msg[:user_msg.find(" ")].capitalize() in reply_actions.actions:
+
+    # react to designated action
+    elif user_msg[:user_msg.find(" ")].capitalize() in reply_actions.actions.keys():
         # get action type
         action = user_msg[:user_msg.find(" ")].capitalize()
         # get what the user want to send out

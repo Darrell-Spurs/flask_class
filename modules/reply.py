@@ -14,10 +14,13 @@ def lowerlize(string):
 class ReplyActions:
     def __init__(self):
         self.user_msg_par = None
-        self.actions = ["Search","Wiki",
-                        "Channel","Latest",
-                        "Location","Route",
-                        "Travel"]
+        self.actions = {"Search":"Enter keyword (e.g. LINE)",
+                        "Wiki": "Enter keyword (e.g. Lionel Messi)",
+                        "Channel": "Enter YouTube Channel (e.g. Drake)",
+                        "Latest":"Enter YouTube Channel to get its latest video (e.g. Drake)",
+                        "Location":"Enter a location to find it on Google Maps (e.g. Taipei 101)",
+                        "Route":"Enter starting point and destination to find out the route on Google Maps (e.g. Taipei 101-Taipei Main Station)",
+                        "Transit":"Enter starting point and destination to find out the fastest transit method (e.g. Taipei 101-Taipei Main Station)"}
     def intro_flex(self):
         return FlexSendMessage(
             alt_text="Not availabe on PC! Please check this on Mobile Device!",
@@ -118,7 +121,7 @@ class ReplyActions:
                             "height": "sm",
                             "action": {
                                 "type": "message",
-                                "label": "Search 🔎 (Search ...)",
+                                "label": "Search 🔎",
                                 "text": "Search"
                             },
                             "color": "#00001a"
@@ -128,7 +131,7 @@ class ReplyActions:
                             "height": "sm",
                             "action": {
                                 "type": "message",
-                                "label": "Wiki 📃 (Wiki ...)",
+                                "label": "Wiki 📃",
                                 "text": "Wiki"
                             },
                             "color": "#00001a"
@@ -138,7 +141,7 @@ class ReplyActions:
                             "height": "sm",
                             "action": {
                                 "type": "message",
-                                "label": "Channel 📺 (Channel ...)",
+                                "label": "Channel 📺",
                                 "text": "Channel"
                             },
                             "color": "#ff1a1a"
@@ -148,7 +151,7 @@ class ReplyActions:
                             "height": "sm",
                             "action": {
                                 "type": "message",
-                                "label": "Latest ✨ (Latest ...)",
+                                "label": "Latest ✨",
                                 "text": "Latest"
                             },
                             "color": "#ff1a1a"
@@ -158,7 +161,7 @@ class ReplyActions:
                             "height": "sm",
                             "action": {
                                 "type": "message",
-                                "label": "Location 📍(Location ...)",
+                                "label": "Location 📍",
                                 "text": "Location"
                             },
                             "color": "#6495ED"
@@ -168,7 +171,7 @@ class ReplyActions:
                             "height": "sm",
                             "action": {
                                 "type": "message",
-                                "label": "Route 🗺 (Route A-B)",
+                                "label": "Route 🗺",
                                 "text": "Route"
                             },
                             "color": "#6495ED"
@@ -178,8 +181,8 @@ class ReplyActions:
                             "height": "sm",
                             "action": {
                                 "type": "message",
-                                "label": "Travel ✈ (Travel A-B)",
-                                "text": "Travel"
+                                "label": "Transit ✈",
+                                "text": "Transit"
                             },
                             "color": "#6495ED"
                         }
@@ -198,7 +201,7 @@ class ReplyActions:
         )
     def wiki_string(self):
         return TextSendMessage(
-            text=f"https://en.wikipedia.org/wiki/{self.user_msg_par.replace(' ','_')}"
+            text=f"https://en.wikipedia.org/w/index.php?search={self.user_msg_par.replace(' ','+')}&ns0=1"
         )
     def channel_string(self):
         return TextSendMessage(
@@ -210,16 +213,16 @@ class ReplyActions:
         )
     def location_string(self):
         return TextSendMessage(
-            text=f"https://www.google.com.tw/maps/search/{self.user_msg_par}"
+            text=f"https://www.google.com.tw/maps/search/{self.user_msg_par}".replace(" ","+")
         )
     def route_string(self):
         start,end = self.user_msg_par.split("-")
         return TextSendMessage(
-            text=f"https://www.google.com.tw/maps/dir/{quote(start)}/{quote(end)}"
+            text=f"https://www.google.com.tw/maps/dir/{quote(start)}/{quote(end)}".replace(" ","+")
         )
-    def travel_string(self):
+    def transit_string(self):
         start, end= self.user_msg_par.split("-")
-        travel = self.get_travel(start, end)
+        travel = self.get_transit(start, end)
         contents = {
             "type": "bubble",
             "size": "mega",
@@ -457,7 +460,7 @@ class ReplyActions:
         # options.add_argument("--headless")
         # driver = webdriver.Chrome(options = options)
 
-        url = f"https://www.youtube.com/results?search_query={quote(keyword)}"
+        url = f"https://www.youtube.com/results?search_query={quote(keyword)}".replace(" ","+")
         driver.get(url)
         driver.implicitly_wait(30)
         target = driver.find_elements_by_class_name("ytd-channel-renderer")
@@ -480,7 +483,7 @@ class ReplyActions:
         # options.add_argument("--headless")
         # driver = webdriver.Chrome(options = options)
 
-        url = f"https://www.youtube.com/results?search_query={quote(keyword)}"
+        url = f"https://www.youtube.com/results?search_query={quote(keyword)}".replace(" ","+")
         driver.get(url)
         driver.implicitly_wait(30)
         target = driver.find_elements_by_class_name("ytd-channel-renderer")
@@ -495,7 +498,7 @@ class ReplyActions:
         links = driver.find_elements_by_id("video-title")
 
         return links[0].get_attribute("href")
-    def get_travel(self,start, end):
+    def get_travel_f(self,start, end):
         user_par = "Transit"
         no_distance = ["Transit", "Flight", '大眾運輸', '飛機']
 
@@ -575,6 +578,89 @@ class ReplyActions:
                 raise e
         driver.close()
         print(infos[0])
+        return infos[0]
+    def get_transit(self,start, end):
+        user_par = "Transit"
+        no_distance = ["Transit", "Flight", '大眾運輸', '飛機']
+
+        options = webdriver.ChromeOptions()
+        options.binary_location = os.environ.get("GOOGLE_CHROME_BIN")
+        options.add_argument('--headless')
+        options.add_argument('--disable-dev-shm-usage')
+        options.add_argument('--no-sandbox')
+        driver = webdriver.Chrome(executable_path=os.environ.get("CHROME_DRIVER_PATH"),
+                                  options=options)
+
+        # options = webdriver.ChromeOptions()
+        # options.add_argument('--headless')
+        # driver = webdriver.Chrome(options=options)
+
+        url = f"https://www.google.com.tw/maps/dir/{quote(start)}/{quote(end)}".replace(" ","+")
+        print(url)
+        driver.get(url)
+
+        driver.implicitly_wait(30)
+        buttons = driver.find_element_by_css_selector("[role~='radiogroup']").find_elements_by_tag_name("button")
+        infos = []
+        for button in buttons:
+            if button.get_attribute("disabled") == "true":
+                continue
+            travel_type = button.find_element_by_tag_name("img").get_attribute("aria-label")
+            try:
+                if button.find_element_by_tag_name("img").get_attribute("aria-label")=="Transit":
+                    ActionChains(driver).click(button).perform()
+                time.sleep(2)
+                travel_list = driver.find_elements_by_css_selector(
+                    "[class='section-layout']>[class~='section-directions-trip']")
+                for method in travel_list:
+                    if travel_type == user_par:
+                        # scroll to the element
+                        driver.execute_script("return arguments[0].scrollIntoView(true);",
+                                              method)
+                        # travel method
+                        way = method.find_element_by_tag_name("img").get_attribute("aria-label").replace(" ", '')
+                        # travel path hint
+                        description = method.find_element_by_tag_name("h1").text
+
+                        # if transit, find the transportation to take
+                        trans_trip = []
+                        if way == "Transit" or way == "大眾運輸":
+                            steps = method.find_elements_by_css_selector(
+                                "[class~='section-directions-trip-renderable-summary']>span")
+                            for step in steps:
+                                alt_type = step.find_element_by_tag_name("img").get_attribute("alt")
+                                # print(step_type,"////", alt_type=="")
+                                alt_type = alt_type if alt_type != "" else "->"
+
+                                transit_tools = step.find_elements_by_css_selector("span")
+                                transit_choices = []
+                                for tool in transit_tools:
+                                    transit_choices.append(tool.text)
+                                transit_choices = set(transit_choices)
+                                transit_choices = list(transit_choices)
+                                transit_choices.remove('')
+                                transit_choices.insert(0, alt_type)
+                                trans_trip += transit_choices
+                        # travel distance
+                        distance = method.find_element_by_css_selector(
+                            "[class~='section-directions-trip-distance']").text \
+                            if way not in no_distance else None
+
+                        duration = method.find_element_by_css_selector(
+                            "[class~='section-directions-trip-duration']:first-child").text
+
+                        condition = method.find_element_by_css_selector("[class~='section-directions-trip-duration']"). \
+                            get_attribute("class").split("-")[-1] if button == 0 else None
+
+                        info = [way, trans_trip, description, distance, duration, condition]
+                        for i in range(len(info)):
+                            if not info[i] or info[i] == []:
+                                info[i] = "N/A"
+                        infos.append(info)
+                        break
+            except Exception as e:
+                raise e
+        driver.close()
         return infos[0]
 
 
