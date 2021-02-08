@@ -16,6 +16,7 @@ class ReplyActions:
         self.user_msg_par = None
         self.actions = {"Search":"Enter keyword (e.g. LINE)",
                         "Wiki": "Enter keyword (e.g. Lionel Messi)",
+                        "Wiki_zh": "輸入中文關鍵字 (e.g. 聊天機器人)",
                         "Channel": "Enter YouTube Channel (e.g. Drake)",
                         "Latest":"Enter YouTube Channel to get its latest video (e.g. Drake)",
                         "Location":"Enter a location to find it on Google Maps (e.g. Taipei 101)",
@@ -141,6 +142,16 @@ class ReplyActions:
                             "height": "sm",
                             "action": {
                                 "type": "message",
+                                "label": "Wiki 中文📜",
+                                "text": "Wiki_zh"
+                            },
+                            "color": "#00001a"
+                        },
+                        {
+                            "type": "button",
+                            "height": "sm",
+                            "action": {
+                                "type": "message",
                                 "label": "Channel 📺",
                                 "text": "Channel"
                             },
@@ -200,6 +211,10 @@ class ReplyActions:
             text=f"https://www.google.com/search?q={self.user_msg_par.replace(' ','+')}"
         )
     def wiki_string(self):
+        return TextSendMessage(
+            text=f"https://en.wikipedia.org/w/index.php?search={self.user_msg_par.replace(' ','+')}&ns0=1"
+        )
+    def wiki_zh_string(self):
         return TextSendMessage(
             text=f"https://en.wikipedia.org/w/index.php?search={self.user_msg_par.replace(' ','+')}&ns0=1"
         )
