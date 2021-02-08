@@ -15,7 +15,7 @@ from firebase_admin import credentials, firestore, auth
 
 from modules.stock import get_stock_info
 from modules.reply import youtube_menu, get_stock_flex, ReplyActions
-import json, time
+import json, time, os
 
 
 app = Flask(__name__)

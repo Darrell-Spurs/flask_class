@@ -5,6 +5,7 @@ from selenium import webdriver
 from selenium.webdriver.common.action_chains import ActionChains
 from urllib.parse import quote
 import time
+import os
 # https://github.com/line/line-bot-sdk-python
 
 def lowerlize(string):
