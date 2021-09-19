@@ -216,7 +216,7 @@ class ReplyActions:
         )
     def wiki_zh_string(self):
         return TextSendMessage(
-            text=f"https://zh.wikipedia.org/zh-tw/index.php?search={self.user_msg_par.replace(' ','+')}&ns0=1"
+            text=f"https://zh.wikipedia.org/w/index.php?search={quote(self.user_msg_par.replace(' ','+'))}&title=Special%3A%E6%90%9C%E7%B4%A2&go=%E5%9F%B7%E8%A1%8C&ns0=1"
         )
     def channel_string(self):
         return TextSendMessage(
